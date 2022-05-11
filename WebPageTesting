@@ -1,0 +1,156 @@
+import org.json.JSONPointer;
+
+import java.util.NoSuchElementException;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.FileHandler;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
+
+import org.json.JSONObject;
+import org.apache.log4j.MDC;
+import org.json.JSONArray;
+import org.junit.Assert;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+import org.openqa.selenium.By;
+import org.openqa.selenium.OutputType;
+import org.openqa.selenium.TakesScreenshot;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.support.ui.Select;
+
+import java.io.*;
+import java.nio.file.Files;
+
+
+public class PositiveTest {
+	FileHandler fh;
+	Logger logger;
+	
+	WebDriver driver;
+	public void loginTest() throws Exception {
+		String url="http://www.amazon.ca";
+		String testDriver = "chrome";
+		setup(testDriver);
+		try {
+			driver.manage().timeouts().implicitlyWait(3, TimeUnit.SECONDS);
+			driver.manage().window().maximize();
+			//navigate to page
+			logger.info("page opened");
+			getScreenshot("C://mainpage.png");
+			WebElement ham = driver.findElement(By.id("nav-hamburger-menu")); 
+			ham.click();
+			logger.info("Hamburger sign clicked");
+			WebElement menu = driver.findElement(By.id("hmenu-content"));
+			if(menu.isDisplayed()) {
+				logger.info("Menu displayed");
+				WebElement kindle = driver.findElement(By.xpath("//div[@id=\"hmenu-content\"]//a[@data-menu-id=\"4\"]"));
+	            kindle.click();	
+	            getScreenshot("C://kindle.png");
+	            logger.info("Kindle selected");
+	            sleep(3000);
+	            WebElement kindleEReader = driver.findElement(By.xpath("//div[@id=\"hmenu-content\"]/ul[@data-menu-id=\"4\"]/li[3]/a[text()='Kindle']"));
+	            kindleEReader.click();	
+	            getScreenshot("C://kindleEReader.png");
+	            logger.info("Kindle E Reader selected");
+	            sleep(3000);
+	            WebElement BuyNow = driver.findElement(By.id("buy-now-button"));
+	            BuyNow.click();
+	            getScreenshot("C://buyNow.png");
+	            logger.info("Buy now button clicked");
+	            WebElement CheckEmail = driver.findElement(By.xpath("//label[@class=\"a-form-label\"]"));
+	            String str = CheckEmail.getText().toString();
+	            logger.info("Checking for email/phn number");
+	            try{
+	            	if(str.equalsIgnoreCase("E-mail Address or mobile phone number")) {
+	            	Assert.assertTrue(driver.findElement(By.xpath("//label[@class=\"a-form-label\"]")).isDisplayed());
+	            	getScreenshot("C://output.png");
+	            	System.out.println(driver.findElement(By.xpath("//label[@class=\"a-form-label\"]")).isDisplayed());
+	            	logger.info("Test Verified.");
+	            	}
+	            }
+	            catch(NoSuchElementException ne) {
+	            	logger.info("Inside catch block " + ne.toString());
+	            	logger.info("Email/phn number label no present");
+	            }
+	          
+			}
+			else {
+				logger.info("Menu not displayed.");
+			}
+		}
+		catch(Exception e){
+			logger.info("Inside catch block " + e.toString());
+			logger.info(e.getMessage());
+			throw new RuntimeException("Code failed");
+		} finally {
+			driver.close();
+		}
+	}
+
+	public void getScreenshot(String filepath) {
+		TakesScreenshot tc = ((TakesScreenshot)driver);
+		try {
+			File scrFile = tc.getScreenshotAs(OutputType.FILE);
+			File destFile = new File(filepath);
+			Files.copy(scrFile, destFile,OutputType.FILE);
+		}
+		catch(IOException e){
+			logger.info(e.getMessage());
+		}
+	}
+	
+	public void setup(String browser) throws Exception{
+		if(browser.equalsIgnoreCase("ms edge")){
+			System.setProperty("webdriver.msedge.driver", "src/main/resources/msedgedriver.exe");
+		driver = new FirefoxDriver();
+		}
+		else if(browser.equalsIgnoreCase("chrome")){
+			System.setProperty("webdriver.chrome.driver", "src/main/resources/chromedriver.exe");
+		driver = new ChromeDriver();
+		}
+		else{
+			//If no browser, throw exception
+			throw new Exception("Incorrect Browser");
+			}
+	}
+	
+	private void sleep(long a) {
+		try {
+		Thread.sleep(a);
+		
+	} catch (InterruptedException e) {
+		
+		e.printStackTrace();
+	}
+	}
+
+
+	private Logger createLogFile() throws SecurityException, IOException {
+		String logFolderPath = System.getenv("HOME") + File.separator + "customcode" + File.separator + "logs";
+		File logfolder = new File(logFolderPath);
+		if (!logfolder.exists() && !logfolder.isDirectory())
+		logfolder.mkdirs();
+		String className = "";
+		Class<?> enclosingClass = getClass().getEnclosingClass();
+		if (enclosingClass != null) {
+		className = enclosingClass.getName();
+		} else {
+		className = getClass().getName();
+		}
+		Logger logger = Logger.getLogger(className);
+		fh = new FileHandler(logFolderPath + File.separator + className + userId + ".log");
+		logger.addHandler(fh);
+		SimpleFormatter formatter = new SimpleFormatter();
+		fh.setFormatter(formatter);
+		logger.info("Initializing log file for " + className);
+		return logger;
+		}
+
+
+
+}
+
+
